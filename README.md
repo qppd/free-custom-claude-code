@@ -33,7 +33,7 @@ A lightweight proxy that routes Claude Code's Anthropic API calls to **NVIDIA NI
 | **Drop-in Replacement**    | Set 2 env vars. No modifications to Claude Code CLI or VSCode extension needed                  |
 | **5 Providers**            | NVIDIA NIM, OpenRouter, DeepSeek, LM Studio (local), llama.cpp (`llama-server`)                  |
 | **Per-Model Mapping**      | Route Opus / Sonnet / Haiku to different models and providers. Mix providers freely             |
-| **Thinking Token Support** | Parses `<think>` tags and `reasoning_content` into native Claude thinking blocks                |
+| **Thinking Token Support** | Parses ` thinking` tags and `reasoning_content` into native Claude thinking blocks                |
 | **Heuristic Tool Parser**  | Models outputting tool calls as text are auto-parsed into structured tool use                   |
 | **Request Optimization**   | 5 categories of trivial API calls intercepted locally, saving quota and latency                 |
 | **Smart Rate Limiting**    | Proactive rolling-window throttle + reactive 429 exponential backoff + optional concurrency cap |
@@ -41,26 +41,36 @@ A lightweight proxy that routes Claude Code's Anthropic API calls to **NVIDIA NI
 | **Subagent Control**       | Task tool interception forces `run_in_background=False`. No runaway subagents                   |
 | **Extensible**             | Clean `BaseProvider` and `MessagingPlatform` ABCs. Add new providers or platforms easily        |
 
+---
+
 ## Quick Start
 
 ### Prerequisites
 
-1. Get an API key (or use LM Studio / llama.cpp locally):
-   - **NVIDIA NIM**: [build.nvidia.com/settings/api-keys](https://build.nvidia.com/settings/api-keys)
-   - **OpenRouter**: [openrouter.ai/keys](https://openrouter.ai/keys)
-   - **DeepSeek**: [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
-   - **LM Studio**: No API key needed. Run locally with [LM Studio](https://lmstudio.ai)
-   - **llama.cpp**: No API key needed. Run `llama-server` locally.
-2. Install [Claude Code](https://github.com/anthropics/claude-code)
+#### Step 1 — Get an API key (or go fully local)
 
-### Install `uv`
+Pick one of the options below:
+
+| Approach     | API Key Needed | Sign Up Link                                              |
+| ------------ | -------------- | --------------------------------------------------------- |
+| **NVIDIA NIM** | Yes            | [build.nvidia.com/settings/api-keys](https://build.nvidia.com/settings/api-keys) |
+| **OpenRouter** | Yes            | [openrouter.ai/keys](https://openrouter.ai/keys)          |
+| **DeepSeek**   | Yes            | [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys) |
+| **LM Studio**  | No             | [lmstudio.ai](https://lmstudio.ai) — run locally          |
+| **llama.cpp**  | No             | Run `llama-server` locally                                |
+
+#### Step 2 — Install tools
+
 ```bash
 # Install uv (required to run the project)
 pip install uv
 ```
-If uv is already installed, run uv self update to get the latest version.
 
-### Clone & Configure
+If uv is already installed, run `uv self update` to get the latest version.
+
+You also need [Claude Code](https://github.com/anthropics/claude-code) installed on your machine.
+
+#### Step 3 — Clone & configure
 
 ```bash
 git clone https://github.com/Alishahryar1/free-claude-code.git
@@ -68,7 +78,7 @@ cd free-claude-code
 cp .env.example .env
 ```
 
-Choose your provider and edit `.env`:
+Open `.env` and choose your provider. Expand the one you want to use:
 
 <details>
 <summary><b>NVIDIA NIM</b> (40 req/min free, recommended)</summary>
@@ -191,33 +201,35 @@ Use this feature if:
 
 </details>
 
-### Run It
+#### Step 4 — Start the proxy
 
-**Terminal 1:** Start the proxy server:
+In **Terminal 1**, start the proxy server:
 
 ```bash
 uv run uvicorn server:app --host 0.0.0.0 --port 8082
 ```
 
-**Terminal 2:** Run Claude Code:
+#### Step 5 — Run Claude Code
 
-Point `ANTHROPIC_BASE_URL` at the proxy root URL, not `http://localhost:8082/v1`.
+In **Terminal 2**, point `ANTHROPIC_BASE_URL` at the proxy (at the root URL, **not** `http://localhost:8082/v1`).
 
-#### Powershell
+**PowerShell:**
 ```powershell
 $env:ANTHROPIC_AUTH_TOKEN="freecc"; $env:ANTHROPIC_BASE_URL="http://localhost:8082"; claude
 ```
-#### Bash
+
+**Bash:**
 ```bash
 ANTHROPIC_AUTH_TOKEN="freecc" ANTHROPIC_BASE_URL="http://localhost:8082" claude
 ```
 
 That's it! Claude Code now uses your configured provider for free.
 
-<details>
-<summary><b>VSCode Extension Setup</b></summary>
+---
 
-1. Start the proxy server (same as above).
+### VSCode Extension Setup
+
+1. Start the proxy server (same as Step 4 above).
 2. Open Settings (`Ctrl + ,`) and search for `claude-code.environmentVariables`.
 3. Click **Edit in settings.json** and add:
 
@@ -233,16 +245,14 @@ That's it! Claude Code now uses your configured provider for free.
 
 To switch back to Anthropic models, comment out the added block and reload extensions.
 
-</details>
+---
 
-
-<details>
-<summary><b>IntelliJ Extension Setup</b></summary>
+### IntelliJ Extension Setup
 
 1. Open the configuration file:
    - **Windows**: `C:\Users\%USERNAME%\AppData\Roaming\JetBrains\acp-agents\installed.json`
    - **Linux/macOS**: `~/.jetbrains/acp.json`
-2. Inside acp.registry.claude-acp, change:
+2. Inside `acp.registry.claude-acp`, change:
 
    ```
    "env": {}
@@ -258,10 +268,9 @@ To switch back to Anthropic models, comment out the added block and reload exten
 3. Start the proxy server
 4. Restart IDE
 
-</details>
+---
 
-<details>
-<summary><b>Multi-Model Support (Model Picker)</b></summary>
+### Multi-Model Support (Model Picker)
 
 `claude-pick` is an interactive model selector that lets you choose any model from your active provider each time you launch Claude, without editing `MODEL` in `.env`.
 
@@ -287,7 +296,7 @@ Then reload your shell (`source ~/.zshrc` or `source ~/.bashrc`) and run `claude
 alias claude-kimi='ANTHROPIC_BASE_URL="http://localhost:8082" ANTHROPIC_AUTH_TOKEN="freecc:moonshotai/kimi-k2.5" claude'
 ```
 
-</details>
+---
 
 ### Install as a Package (no clone needed)
 
@@ -321,7 +330,7 @@ free-claude-code    # starts the server
 - **Per-model routing**: Opus / Sonnet / Haiku requests resolve to their model-specific backend, with `MODEL` as fallback
 - **Request optimization**: 5 categories of trivial requests (quota probes, title generation, prefix detection, suggestions, filepath extraction) are intercepted and responded to locally without using API quota
 - **Format handling**: OpenRouter, LM Studio, and llama.cpp use native Anthropic Messages endpoints; NIM and DeepSeek use shared OpenAI chat translation
-- **Thinking tokens**: `<think>` tags and `reasoning_content` fields are converted into native Claude thinking blocks when `ENABLE_THINKING=true`
+- **Thinking tokens**: ` thinking` tags and `reasoning_content` fields are converted into native Claude thinking blocks when `ENABLE_THINKING=true`
 
 The proxy also exposes Claude-compatible probe routes: `GET /v1/models`, `POST /v1/messages`, `POST /v1/messages/count_tokens`, plus `HEAD`/`OPTIONS` support for the common probe endpoints.
 
@@ -347,8 +356,9 @@ Models use a prefix format: `provider_prefix/model/name`. An invalid prefix caus
 | LM Studio  | `lmstudio/...`    | (none)               | `localhost:1234/v1`           |
 | llama.cpp  | `llamacpp/...`    | (none)               | `localhost:8080/v1`           |
 
-<details>
-<summary><b>NVIDIA NIM models</b></summary>
+---
+
+### NVIDIA NIM models
 
 Popular models (full list in [`nvidia_nim_models.json`](nvidia_nim_models.json)):
 
@@ -360,10 +370,9 @@ Popular models (full list in [`nvidia_nim_models.json`](nvidia_nim_models.json))
 
 Browse: [build.nvidia.com](https://build.nvidia.com/explore/discover) · Update list: `curl "https://integrate.api.nvidia.com/v1/models" > nvidia_nim_models.json`
 
-</details>
+---
 
-<details>
-<summary><b>OpenRouter models</b></summary>
+### OpenRouter models
 
 Popular free models:
 
@@ -374,10 +383,9 @@ Popular free models:
 
 Browse: [openrouter.ai/models](https://openrouter.ai/models) · [Free models](https://openrouter.ai/collections/free-models)
 
-</details>
+---
 
-<details>
-<summary><b>DeepSeek models</b></summary>
+### DeepSeek models
 
 DeepSeek currently exposes the direct API models:
 
@@ -386,10 +394,9 @@ DeepSeek currently exposes the direct API models:
 
 Browse: [api-docs.deepseek.com](https://api-docs.deepseek.com)
 
-</details>
+---
 
-<details>
-<summary><b>LM Studio models</b></summary>
+### LM Studio models
 
 Run models locally with [LM Studio](https://lmstudio.ai). Load a model in the Chat or Developer tab, then set `MODEL` to its identifier.
 
@@ -402,17 +409,14 @@ Examples with native tool-use support:
 
 Browse: [model.lmstudio.ai](https://model.lmstudio.ai)
 
-</details>
+---
 
-<details>
-<summary><b>llama.cpp models</b></summary>
+### llama.cpp models
 
 Run models locally using `llama-server`. Ensure you have a tool-capable GGUF. Set `MODEL` to whatever arbitrary name you'd like (e.g. `llamacpp/my-model`), as `llama-server` ignores the model name when run via `/v1/messages`.
 
 See the Unsloth docs for detailed instructions and capable models:
 [https://unsloth.ai/docs/models/qwen3.5#qwen3.5-small-0.8b-2b-4b-9b](https://unsloth.ai/docs/models/qwen3.5#qwen3.5-small-0.8b-2b-4b-9b)
-
-</details>
 
 ---
 
@@ -435,26 +439,26 @@ Control Claude Code remotely from Discord (or Telegram). Send tasks, watch live 
 
 2. **Edit `.env`:**
 
-```dotenv
-MESSAGING_PLATFORM="discord"
-DISCORD_BOT_TOKEN="your_discord_bot_token"
-ALLOWED_DISCORD_CHANNELS="123456789,987654321"
-```
+   ```dotenv
+   MESSAGING_PLATFORM="discord"
+   DISCORD_BOT_TOKEN="your_discord_bot_token"
+   ALLOWED_DISCORD_CHANNELS="123456789,987654321"
+   ```
 
-> Enable Developer Mode in Discord (Settings → Advanced), then right-click a channel and "Copy ID". Comma-separate multiple channels. If empty, no channels are allowed.
+   > Enable Developer Mode in Discord (Settings → Advanced), then right-click a channel and "Copy ID". Comma-separate multiple channels. If empty, no channels are allowed.
 
 3. **Configure the workspace** (where Claude will operate):
 
-```dotenv
-CLAUDE_WORKSPACE="./agent_workspace"
-ALLOWED_DIR="C:/Users/yourname/projects"
-```
+   ```dotenv
+   CLAUDE_WORKSPACE="./agent_workspace"
+   ALLOWED_DIR="C:/Users/yourname/projects"
+   ```
 
 4. **Start the server:**
 
-```bash
-uv run uvicorn server:app --host 0.0.0.0 --port 8082
-```
+   ```bash
+   uv run uvicorn server:app --host 0.0.0.0 --port 8082
+   ```
 
 5. **Invite the bot** via OAuth2 URL Generator (scopes: `bot`, permissions: Read Messages, Send Messages, Manage Messages, Read Message History).
 
@@ -500,23 +504,23 @@ Configure via `WHISPER_DEVICE` (`cpu` | `cuda` | `nvidia_nim`) and `WHISPER_MODE
 
 ### Core
 
-| Variable             | Description                                                           | Default                                           |
-| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
-| `MODEL`              | Fallback model (`provider/model/name` format; invalid prefix → error) | `nvidia_nim/z-ai/glm4.7`                          |
-| `MODEL_OPUS`         | Model for Claude Opus requests; empty falls back to `MODEL`           | empty                                             |
-| `MODEL_SONNET`       | Model for Claude Sonnet requests; empty falls back to `MODEL`         | empty                                             |
-| `MODEL_HAIKU`        | Model for Claude Haiku requests; empty falls back to `MODEL`          | empty                                             |
+| Variable                | Description                                                           | Default                                           |
+| ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| `MODEL`                 | Fallback model (`provider/model/name` format; invalid prefix → error) | `nvidia_nim/z-ai/glm4.7`                          |
+| `MODEL_OPUS`            | Model for Claude Opus requests; empty falls back to `MODEL`           | empty                                             |
+| `MODEL_SONNET`          | Model for Claude Sonnet requests; empty falls back to `MODEL`         | empty                                             |
+| `MODEL_HAIKU`           | Model for Claude Haiku requests; empty falls back to `MODEL`          | empty                                             |
 | `NVIDIA_NIM_API_KEY`    | NVIDIA API key                                                        | required for NIM                                  |
-| `ENABLE_THINKING`    | Global switch for provider reasoning requests and Claude thinking blocks. Set `false` to hide thinking across all providers. | `true` |
-| `OPENROUTER_API_KEY` | OpenRouter API key                                                    | required for OpenRouter                           |
-| `OPENROUTER_TRANSPORT` | Diagnostic rollback only: `anthropic` uses OpenRouter's native Messages API, `openai` uses chat completions | `anthropic` |
-| `DEEPSEEK_API_KEY`   | DeepSeek API key                                                      | required for DeepSeek                             |
-| `LM_STUDIO_BASE_URL` | LM Studio server URL                                                  | `http://localhost:1234/v1`                        |
-| `LLAMACPP_BASE_URL`  | llama.cpp server URL                                                  | `http://localhost:8080/v1`                        |
-| `NVIDIA_NIM_PROXY`   | Optional proxy URL for NVIDIA NIM requests (`http://...` or `socks5://...`) | `""` |
-| `OPENROUTER_PROXY`   | Optional proxy URL for OpenRouter requests (`http://...` or `socks5://...`) | `""` |
-| `LMSTUDIO_PROXY`     | Optional proxy URL for LM Studio requests (`http://...` or `socks5://...`) | `""` |
-| `LLAMACPP_PROXY`     | Optional proxy URL for llama.cpp requests (`http://...` or `socks5://...`) | `""` |
+| `ENABLE_THINKING`       | Global switch for provider reasoning requests and Claude thinking blocks. Set `false` to hide thinking across all providers. | `true` |
+| `OPENROUTER_API_KEY`    | OpenRouter API key                                                    | required for OpenRouter                           |
+| `OPENROUTER_TRANSPORT`  | Diagnostic rollback only: `anthropic` uses OpenRouter's native Messages API, `openai` uses chat completions | `anthropic` |
+| `DEEPSEEK_API_KEY`      | DeepSeek API key                                                      | required for DeepSeek                             |
+| `LM_STUDIO_BASE_URL`    | LM Studio server URL                                                  | `http://localhost:1234/v1`                        |
+| `LLAMACPP_BASE_URL`     | llama.cpp server URL                                                  | `http://localhost:8080/v1`                        |
+| `NVIDIA_NIM_PROXY`      | Optional proxy URL for NVIDIA NIM requests (`http://...` or `socks5://...`) | `""` |
+| `OPENROUTER_PROXY`      | Optional proxy URL for OpenRouter requests (`http://...` or `socks5://...`) | `""` |
+| `LMSTUDIO_PROXY`        | Optional proxy URL for LM Studio requests (`http://...` or `socks5://...`) | `""` |
+| `LLAMACPP_PROXY`        | Optional proxy URL for llama.cpp requests (`http://...` or `socks5://...`) | `""` |
 
 ### Rate Limiting & Timeouts
 
